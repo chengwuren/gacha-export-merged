@@ -116,5 +116,6 @@
     "electron",
     "vue3",
     "rollup"
-  ]
+  ],
+  "description": "原神/星穹铁道/绝区零 抽卡记录导出工具(三合一)"
 }
