@@ -32,7 +32,9 @@ module.exports = {
   gacha: {
     probeTypes: ['301', '302', '500', '200', '100'],
     poolKeys: ['301', '302', '400', '500', '200', '100'],
-    rankMax: '5'
+    rankMax: '5',
+    // 原神首页请求不带 end_id(0 为假值不拼接),与上游一致
+    endIdInit: 0
   },
   excel: {
     rankColor: { 3: 'ff8e8e8e', 4: 'ffa256e1', 5: 'ffbd6932' },

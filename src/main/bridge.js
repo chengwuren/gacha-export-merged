@@ -1,5 +1,5 @@
 const { clipboard, ipcMain } = require('electron')
-const { getUrl, deleteData, getApiUrl, readData, getData } = require('./getData')
+const { getUrl, deleteData, getApiUrl, readData, getData, bumpFetchGeneration } = require('./getData')
 const config = require('./config')
 const { getGameInfo, gameList, setGame } = require('../games')
 
@@ -34,6 +34,8 @@ ipcMain.handle('GET_GAME_INFO', () => {
 })
 
 ipcMain.handle('SET_GAME', async (event, id) => {
+  // 中止在途取数,避免切游戏后旧数据写串
+  bumpFetchGeneration()
   const game = setGame(id)
   config.currentGame = game.id
   // 恢复该游戏上次选中的 uid

@@ -273,7 +273,8 @@ const getGachaLogs = async ({ name, key }, queryString) => {
   let uid = ''
   let region = ''
   let region_time_zone = ''
-  let endId = '0'
+  // 原神上游首页不带 end_id(数值 0 为假值);SR/ZZZ 上游固定传 end_id=0
+  let endId = game.gacha.endIdInit ?? '0'
   const recordPath = game.api.recordPathFor ? game.api.recordPath + game.api.recordPathFor(key) : game.api.recordPath + 'getGachaLog'
   const url = `${apiDomain}${recordPath}?${queryString}`
   do {
@@ -295,6 +296,12 @@ const getGachaLogs = async ({ name, key }, queryString) => {
 
     if (logs.length) {
       endId = logs[logs.length - 1].id
+    }
+
+    // 分页安全上限(1000 页 = 2 万条/池),防止 API 异常时死循环
+    if (page > 1000) {
+      sendMsg(`分页超过上限,已中断(${name})`, 'ERROR')
+      break
     }
 
     if (!config.fetchFullHistory && logs.length && uid && currentDataMap().has(uid)) {
@@ -456,9 +463,14 @@ const getUrl = async () => {
   return url
 }
 
+// 取数代际号:切换游戏时 +1,使在途 fetch 在卡池循环间隙自行中止
+let fetchGeneration = 0
+const bumpFetchGeneration = () => ++fetchGeneration
+
 const fetchData = async (urlOverride) => {
   const text = i18n.log
   const game = getGame()
+  const gen = fetchGeneration
   await readData()
   let url = urlOverride
   if (!url) {
@@ -503,6 +515,9 @@ const fetchData = async (urlOverride) => {
   let originRegion = ''
   let localTimeZone
   for (const type of gachaType) {
+    if (gen !== fetchGeneration) {
+      throw new Error('FETCH_ABORTED')
+    }
     const { list, uid, region, region_time_zone } = await getGachaLogs(type, queryString)
     if (game.api.serverTimeZoneMap) {
       const tz = game.api.serverTimeZoneMap.get(region)
@@ -571,6 +586,9 @@ ipcMain.handle('FETCH_DATA', async (event, param) => {
       current: config.current
     }
   } catch (e) {
+    if (e && e.message === 'FETCH_ABORTED') {
+      return false
+    }
     sendMsg(e, 'ERROR')
     console.error(e)
   }
@@ -639,3 +657,4 @@ exports.convertTimeZone = convertTimeZone
 exports.getGachaType = (lang) => getGame().getGachaType(lang)
 exports.readData = readData
 exports.currentDataMap = currentDataMap
+exports.bumpFetchGeneration = bumpFetchGeneration

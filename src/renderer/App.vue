@@ -242,16 +242,27 @@ const typeMap = computed(() => {
   return result
 })
 
+// 取数代际号:切换游戏后旧结果直接丢弃,UI 永不因在途请求而锁死
+let fetchGen = 0
 const fetchData = async (url) => {
+  const gen = ++fetchGen
   state.log = ''
   state.status = 'loading'
-  const data = await ipcRenderer.invoke('FETCH_DATA', url)
-  if (data) {
-    state.dataMap = data.dataMap
-    state.current = data.current
-    state.status = 'loaded'
-  } else {
+  try {
+    const data = await ipcRenderer.invoke('FETCH_DATA', url)
+    if (gen !== fetchGen) return
+    if (data) {
+      state.dataMap = data.dataMap
+      state.current = data.current
+      state.status = 'loaded'
+    } else {
+      state.status = 'failed'
+    }
+  } catch (e) {
+    if (gen !== fetchGen) return
     state.status = 'failed'
+    state.log = String(e)
+    console.error(e)
   }
 }
 
@@ -273,7 +284,8 @@ const loadGameMeta = async () => {
 }
 
 const changeGame = async (id) => {
-  if (state.status === 'loading' || id === state.gameId) return
+  if (id === state.gameId) return
+  fetchGen++ // 使在途的取数结果过期
   state.status = 'init'
   try {
     const data = await ipcRenderer.invoke('SET_GAME', id)
@@ -448,6 +460,15 @@ onMounted(async () => {
 
   ipcRenderer.on('AUTHKEY_TIMEOUT', (event, message) => {
     state.authkeyTimeout = message
+  })
+
+  // 兜底:任何未捕获的异步错误都不允许把界面留在 loading 态
+  window.addEventListener('unhandledrejection', (e) => {
+    console.error(e.reason)
+    if (state.status === 'loading') {
+      state.status = 'failed'
+      state.log = String(e.reason)
+    }
   })
 
   await updateConfig()
