@@ -12,6 +12,11 @@ const { getUpdateInfo } = require('./update/index')
 const isDev = !app.isPackaged
 let win = null
 
+// 开发模式留一个渲染层调试端口,界面真·无响应时可远程抓调用栈
+if (isDev) {
+  app.commandLine.appendSwitch('remote-debugging-port', '9223')
+}
+
 function createWindow() {
   win = initWindow()
   win.setMenuBarVisibility(false)

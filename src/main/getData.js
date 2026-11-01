@@ -241,7 +241,7 @@ const readLog = async () => {
   }
 }
 
-const getGachaLog = async ({ key, page, name, retryCount, url, endId }) => {
+const getGachaLog = async ({ key, page, name, retryCount, url, endId, gen }) => {
   const text = i18n.log
   try {
     const param = getGame().api.gachaTypeParam
@@ -251,11 +251,15 @@ const getGachaLog = async ({ key, page, name, retryCount, url, endId }) => {
     }
     throw new Error(res?.message || res)
   } catch (e) {
+    // 切换游戏后立即停止重试
+    if (gen !== undefined && gen !== fetchGeneration) {
+      throw new Error('FETCH_ABORTED')
+    }
     if (retryCount) {
       sendMsg(i18n.parse(text.fetch.retry, { name, page, count: 6 - retryCount }))
       await sleep(5)
       retryCount--
-      return await getGachaLog({ key, page, name, retryCount, url, endId })
+      return await getGachaLog({ key, page, name, retryCount, url, endId, gen })
     } else {
       sendMsg(i18n.parse(text.fetch.retryFailed, { name, page }))
       throw e
@@ -263,7 +267,7 @@ const getGachaLog = async ({ key, page, name, retryCount, url, endId }) => {
   }
 }
 
-const getGachaLogs = async ({ name, key }, queryString) => {
+const getGachaLogs = async ({ name, key }, queryString, gen) => {
   const text = i18n.log
   const game = getGame()
   let page = 1
@@ -278,9 +282,13 @@ const getGachaLogs = async ({ name, key }, queryString) => {
   const recordPath = game.api.recordPathFor ? game.api.recordPath + game.api.recordPathFor(key) : game.api.recordPath + 'getGachaLog'
   const url = `${apiDomain}${recordPath}?${queryString}`
   do {
+    // 每一页都检查代际号:切换游戏后 1 页内立即中止(全量历史可能要拉几分钟)
+    if (gen !== undefined && gen !== fetchGeneration) {
+      throw new Error('FETCH_ABORTED')
+    }
     await sleep(0.3)
     sendMsg(i18n.parse(text.fetch.current, { name, page }))
-    res = await getGachaLog({ key, page, name, url, endId, retryCount: 5 })
+    res = await getGachaLog({ key, page, name, url, endId, retryCount: 5, gen })
     logs = res?.list || []
     if (!uid && logs.length) {
       uid = logs[0].uid
@@ -463,14 +471,15 @@ const getUrl = async () => {
   return url
 }
 
-// 取数代际号:切换游戏时 +1,使在途 fetch 在卡池循环间隙自行中止
+// 取数代际号:切换游戏或发起新取数时 +1,使在途 fetch 每页自行中止
 let fetchGeneration = 0
 const bumpFetchGeneration = () => ++fetchGeneration
 
 const fetchData = async (urlOverride) => {
   const text = i18n.log
   const game = getGame()
-  const gen = fetchGeneration
+  // 每次新取数作废所有旧取数(防止多游戏并发拉取)
+  const gen = ++fetchGeneration
   await readData()
   let url = urlOverride
   if (!url) {
@@ -518,7 +527,7 @@ const fetchData = async (urlOverride) => {
     if (gen !== fetchGeneration) {
       throw new Error('FETCH_ABORTED')
     }
-    const { list, uid, region, region_time_zone } = await getGachaLogs(type, queryString)
+    const { list, uid, region, region_time_zone } = await getGachaLogs(type, queryString, gen)
     if (game.api.serverTimeZoneMap) {
       const tz = game.api.serverTimeZoneMap.get(region)
       if (!tz) {
