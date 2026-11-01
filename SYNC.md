@@ -54,3 +54,8 @@ git cherry-pick <commit>
   合并时注意保留
 - zzz 仓库同时是 star-rail 仓库的下游:zzz 对共享逻辑的改动如果 biuuu 两仓还没有,
   大概率是 zzz 专属功能,落到 games/zzz/ 或先观察
+- 上游的 `idmap.yml`(idJson 自动更新机器人)已从本仓库移除:它依赖上游的 GH_PAT
+  密钥和 `src/idJson.json` 旧路径。上游的 idJson 更新提交仍按上表手动合并到
+  `src/games/<id>/idJson.json`
+- 本地测试:`yarn test`(单元)+ `node tools/e2e-test.mjs`(合成数据全链路 E2E,
+  会自动备份/恢复 dist/userData)
