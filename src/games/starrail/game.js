@@ -4,7 +4,7 @@ const gachaTypeJson = require('./gachaType.json')
 
 module.exports = {
   id: 'starrail',
-  name: '崩坏:星穹铁道',
+  name: '崩坏：星穹铁道',
   uigfKey: 'hkrpg',
   api: {
     domain: 'https://public-operation-hkrpg.mihoyo.com',
@@ -21,7 +21,8 @@ module.exports = {
   },
   log: {
     baseDir: 'AppData/LocalLow',
-    gameDirs: ['/miHoYo/崩坏:星穹铁道/', '/Cognosphere/Star Rail/'],
+    // 注意:目录名是全角冒号(Windows 不允许半角冒号)
+    gameDirs: ['/miHoYo/崩坏：星穹铁道/', '/Cognosphere/Star Rail/'],
     logFile: 'Player.log',
     // 从日志里定位游戏安装目录
     dataDirRegex: /\w:\/.*?\/StarRail_Data\//i,

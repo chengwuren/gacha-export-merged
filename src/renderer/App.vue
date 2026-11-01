@@ -2,9 +2,14 @@
   <div v-if="ui" class="relative">
     <div class="flex justify-between">
       <div class="space-x-3">
-        <el-select v-model="state.gameId" class="!w-32 mr-1 align-middle" :disabled="state.status === 'loading'" @change="changeGame">
-          <el-option v-for="g of state.gameList" :key="g.id" :label="g.name" :value="g.id"></el-option>
-        </el-select>
+        <span class="inline-flex items-center gap-2 align-middle mr-1">
+          <el-tooltip v-for="g of state.gameList" :key="g.id" :content="g.name" placement="bottom">
+            <img :src="gameIcons[g.id]" :alt="g.name" :title="g.name"
+              class="w-9 h-9 rounded-full cursor-pointer transition duration-200 select-none"
+              :class="state.gameId === g.id ? 'ring-2 ring-blue-400 opacity-100' : 'opacity-40 grayscale hover:opacity-75'"
+              @click="changeGame(g.id)" draggable="false">
+          </el-tooltip>
+        </span>
         <el-button type="primary" :icon="state.status === 'init' ? 'milk-tea': 'refresh-right'" class="focus:outline-none" :disabled="!allowClick()" plain @click="fetchData()" :loading="state.status === 'loading'">{{state.status === 'init' ? ui.button.load: ui.button.update}}</el-button>
         <el-dropdown :disabled="!gachaData" @command="exportCommand">
           <el-button :disabled="!gachaData" icon="folder-opened" class="focus:outline-none" type="success" plain>
@@ -99,6 +104,11 @@ import Setting from './components/Setting.vue'
 import gachaDetail from './gachaDetail'
 import { version } from '../../package.json'
 import { ElMessage, ElMessageBox } from 'element-plus'
+import iconGenshin from './assets/game-icons/genshin.png'
+import iconStarrail from './assets/game-icons/starrail.png'
+import iconZZZ from './assets/game-icons/zzz.png'
+
+const gameIcons = { genshin: iconGenshin, starrail: iconStarrail, zzz: iconZZZ }
 
 const ComponentMap = {
   genshin: { PieChart: PieChartGenshin, GachaDetail: GachaDetailGenshin },
@@ -263,17 +273,24 @@ const loadGameMeta = async () => {
 }
 
 const changeGame = async (id) => {
+  if (state.status === 'loading' || id === state.gameId) return
   state.status = 'init'
-  const data = await ipcRenderer.invoke('SET_GAME', id)
-  if (data) {
-    state.dataMap = data.dataMap
-    state.current = data.current
-    state.gameInfo = data.game
-    state.gameId = data.game.id
-    await getI18nData()
-    if (data.dataMap.get(data.current)) {
-      state.status = 'loaded'
+  try {
+    const data = await ipcRenderer.invoke('SET_GAME', id)
+    if (data) {
+      state.dataMap = data.dataMap
+      state.current = data.current
+      state.gameInfo = data.game
+      state.gameId = data.game.id
+      await getI18nData()
+      if (data.dataMap.get(data.current)) {
+        state.status = 'loaded'
+      }
     }
+  } catch (e) {
+    state.status = 'failed'
+    state.log = String(e)
+    console.error(e)
   }
 }
 

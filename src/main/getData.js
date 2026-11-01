@@ -490,6 +490,11 @@ const fetchData = async (urlOverride) => {
   }
   queryString = searchParams.toString()
   const gachaType = await game.getGachaType(searchParams.get('lang'))
+  if (!gachaType || !gachaType.length) {
+    const message = `未获取到卡池定义(${game.id}/${searchParams.get('lang')})`
+    sendMsg(message, 'ERROR')
+    throw new Error(message)
+  }
 
   const result = new Map()
   const typeMap = new Map()
