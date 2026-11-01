@@ -1,8 +1,8 @@
 <template>
   <div v-if="ui" class="relative">
     <div class="flex justify-between">
-      <div class="space-x-3">
-        <span class="inline-flex items-center gap-2 align-middle mr-1">
+      <div class="flex items-center space-x-3">
+        <span class="inline-flex items-center gap-2 mr-1">
           <el-tooltip v-for="g of state.gameList" :key="g.id" :content="g.name" placement="bottom">
             <img :src="gameIcons[g.id]" :alt="g.name" :title="g.name"
               class="w-9 h-9 rounded-full cursor-pointer transition duration-200 select-none"
@@ -31,7 +31,7 @@
           <el-button @click="relaunch()" type="success" icon="refresh"   class="focus:outline-none" style="margin-left: 48px">{{ui.button.directUpdate}}</el-button>
         </el-tooltip>
       </div>
-      <div class="flex gap-2">
+      <div class="flex items-center gap-2">
         <el-select v-if="state.status !== 'loading' && dataMap && (dataMap.size > 1 || (dataMap.size === 1 && state.current === 0))" class="!w-44"   @change="changeCurrent" v-model="uidSelectText">
           <el-option
             v-for="item of dataMap"

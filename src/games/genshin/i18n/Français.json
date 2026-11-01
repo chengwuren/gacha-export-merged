@@ -84,5 +84,20 @@
   "excel.filePrefix": "GenshinImpact_historique_voeux",
   "excel.fileType": "Classeur Excel",
   "ui.extra.cacheClean": "1. Confirmez si l'historique des vœux dans le jeu a été ouvert et si l'erreur \"Authentification utilisateur expirée\" apparaît toujours, essayez les étapes suivantes \n2. Fermez la fenêtre de jeu de Genshin Impact \n3. Cliquez sur le bouton \"Ouvrir le dossier de cache Web\" ci-dessus pour ouvrir le dossier \"Cache\" \n4. Supprimez le dossier \"Cache_Data\" \n5. Démarrez le jeu Genshin Impact et ouvrez la page d'historique des vœux dans le jeu \n6. Fermez cette boîte de dialogue et cliquez sur le bouton \"Mettre à jour les données\"",
-  "ui.extra.findCacheFolder": "Si le bouton \"Ouvrir le dossier de cache\" ne répond pas, vous pouvez rechercher manuellement le dossier cache web du jeu. Le répertoire est \"Chemin d'installation de votre jeu/Genshin Impact Game/GenshinImpact_Data/webCaches/Cache/\""
+  "ui.extra.findCacheFolder": "Si le bouton \"Ouvrir le dossier de cache\" ne répond pas, vous pouvez rechercher manuellement le dossier cache web du jeu. Le répertoire est \"Chemin d'installation de votre jeu/Genshin Impact Game/GenshinImpact_Data/webCaches/Cache/\"",
+  "ui.button.files": "Exporter les fichiers",
+  "ui.button.srgf": "Exporter vers JSON",
+  "ui.button.copyUrl": "Copier l'URL",
+  "ui.setting.dataManagerHint": "Les données inutilisées peuvent être supprimées",
+  "ui.common.data": "Données",
+  "ui.common.dataManage": "Gestion de données",
+  "ui.common.updateTime": "Date de mise à jour",
+  "ui.common.status": "Statut",
+  "ui.common.action": "Action",
+  "ui.common.deleted": "Supprimé",
+  "ui.common.normal": "Normal",
+  "ui.common.delete": "Supprimer",
+  "ui.common.restore": "Restaurer",
+  "srgf.fileType": "Fichier Star Rail Gacha Log Format",
+  "ui.extra.urlCopied": "URL copiée"
 }
