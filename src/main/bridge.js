@@ -1,7 +1,13 @@
 const { clipboard, ipcMain } = require('electron')
 const { getUrl, deleteData, getApiUrl, readData, getData, bumpFetchGeneration } = require('./getData')
 const config = require('./config')
+const i18n = require('./i18n')
 const { getGameInfo, gameList, setGame } = require('../games')
+
+// 渲染层异常上报,写入 log.txt 便于诊断
+ipcMain.on('RENDERER_LOG', (event, text) => {
+  require('./utils').sendMsg(String(text), 'RENDERER_ERROR')
+})
 
 ipcMain.handle('COPY_URL', async () => {
   const url = await getUrl()
@@ -42,8 +48,10 @@ ipcMain.handle('SET_GAME', async (event, id) => {
   config.current = (config.uidByGame && config.uidByGame[game.id]) || 0
   await config.save()
   await readData()
+  // i18n 一并带回:渲染层必须一次性原子切换游戏状态,避免"新游戏数据 + 旧游戏语言包"的混合渲染
   return {
     ...getData(),
-    game: getGameInfo()
+    game: getGameInfo(),
+    i18n: i18n.data
   }
 })

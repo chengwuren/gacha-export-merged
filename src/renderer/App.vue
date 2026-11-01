@@ -290,11 +290,14 @@ const changeGame = async (id) => {
   try {
     const data = await ipcRenderer.invoke('SET_GAME', id)
     if (data) {
+      // 原子切换:所有游戏相关状态在同一次渲染中落地,严禁分步 await(混合渲染会让
+      // A 游戏组件拿到 B 游戏语言包,PieChart 读不到 chara5 等键直接抛错冻住渲染队列)
       state.dataMap = data.dataMap
       state.current = data.current
       state.gameInfo = data.game
       state.gameId = data.game.id
-      await getI18nData()
+      state.i18n = data.i18n
+      setTitle()
       if (data.dataMap.get(data.current)) {
         state.status = 'loaded'
       }

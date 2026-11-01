@@ -49,7 +49,7 @@ const parseData = (detail, type) => {
     [text.weapon3]: false,
   };
   keys.forEach((key, index) => {
-    if (!detail[key[1]]) return;
+    if (!key[0] || !detail[key[1]]) return;
     result.push({
       value: detail[key[1]],
       name: key[0],
@@ -58,7 +58,7 @@ const parseData = (detail, type) => {
   });
   if (
     type === "100" ||
-    result.findIndex((item) => item.name.includes("5")) === -1
+    result.findIndex((item) => item.name && item.name.includes("5")) === -1
   ) {
     selected[text.weapon3] = true;
   }
