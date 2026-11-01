@@ -9,6 +9,8 @@ const i18n = require('./i18n')
 const { enableProxy, disableProxy } = require('./module/system-proxy')
 const mitmproxy = require('./module/node-mitmproxy')
 const { mergeData } =  require('./utils/mergeData')
+const { detectDataGame: detectDataGameImpl, normalizeGenshinRow } = require('./utils/legacyData')
+const { convertTimeZone } = require('./utils/gachaUtils')
 const { getGame, getGameId, allGames } = require('../games')
 
 // 每个游戏独立的数据容器:gameId → Map(uid → data)
@@ -30,39 +32,10 @@ const saveData = async (data) => {
   await saveJSON(`gacha-list-${data.uid}.json`, obj, gameDataPath())
 }
 
-const convertTimeZone = (dateTimeStr, fromTimeZoneOffset, toTimeZoneOffset) => {
-  let date = new Date(dateTimeStr.replace(' ', 'T') + 'Z');
-  let utcDate = new Date(date.getTime() - fromTimeZoneOffset * 60 * 60 * 1000);
-  let targetDate = new Date(utcDate.getTime() + toTimeZoneOffset * 60 * 60 * 1000);
-  let year = targetDate.getUTCFullYear();
-  let month = String(targetDate.getUTCMonth() + 1).padStart(2, '0');
-  let day = String(targetDate.getUTCDate()).padStart(2, '0');
-  let hours = String(targetDate.getUTCHours()).padStart(2, '0');
-  let minutes = String(targetDate.getUTCMinutes()).padStart(2, '0');
-  let seconds = String(targetDate.getUTCSeconds()).padStart(2, '0');
-  return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
-}
-
 // 旧版单游戏应用把 gacha-list-*.json 直接放在 userData 根目录,这里按内容识别归属游戏后搬运
-const detectDataGame = (data) => {
-  if (!data || !Array.isArray(data.result) || !data.result.length) return null
-  const keys = data.result.map(r => r[0])
-  const rows = data.result.flatMap(r => r[1] || [])
-  if (!rows.length) return null
-  // 旧原神的数据行是数组
-  if (Array.isArray(rows[0])) {
-    return 'genshin'
-  }
-  const ranks = rows.map(r => Number(r.rank_type)).filter(Boolean)
-  const maxRank = ranks.length ? Math.max(...ranks) : 0
-  const games = allGames()
-  const candidates = games.filter(g => keys.every(k => g.gacha.poolKeys.includes(k)))
-  if (!candidates.length) return null
-  const exact = candidates.filter(g => Number(g.gacha.rankMax) === maxRank)
-  if (exact.length === 1) return exact[0].id
-  const fits = candidates.filter(g => Number(g.gacha.rankMax) >= maxRank)
-  return (fits[0] || candidates[0]).id
-}
+const detectDataGame = (data) => detectDataGameImpl(data, allGames())
+
+// 旧原神数组行 → 统一对象格式(实现见 utils/legacyData)
 
 const findDataFiles = async (dataPath, fileMap) => {
   const files = await readdir(dataPath)
@@ -75,11 +48,7 @@ const findDataFiles = async (dataPath, fileMap) => {
   }
 }
 
-// 旧原神数组行 → 统一对象格式
-const normalizeGenshinRow = (item) => {
-  const [time, name, item_type, rank_type, gacha_type, id] = item
-  return { id, item_id: '', item_type, name, rank_type: String(rank_type), time, gacha_id: gacha_type, gacha_type, count: '1' }
-}
+// 旧原神数组行的格式转换实现见 utils/legacyData 的 normalizeGenshinRow
 
 const collectDataFiles = async () => {
   await fs.ensureDir(gameDataPath())
